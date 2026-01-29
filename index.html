@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ระบบเบิกจ่ายเรียลไทม์ | PEA Asset Cloud</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    
+    <style>
+        /* --- MODERN PEA THEME --- */
+        :root { 
+            --p-main: #720e9e; 
+            --p-grad-1: linear-gradient(135deg, #720e9e 0%, #9d46c1 100%);
+            --bg-color: #f4f6f9;
+        }
+        body { font-family: 'Kanit', sans-serif; background: var(--bg-color); color: #495057; -webkit-font-smoothing: antialiased; }
+        .hidden { display: none !important; }
+
+        /* Custom UI */
+        .btn-purple { background: var(--p-main); color: white; border-radius: 12px; }
+        .btn-purple:hover { background: var(--p-dark); color: white; }
+        .glass-card { background: white; border: none; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        
+        /* Avatar Selector */
+        .avatar-option { width: 60px; height: 60px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; transition: all 0.2s; background-size: cover; background-position: center; }
+        .avatar-option:hover { transform: scale(1.1); }
+        .avatar-option.selected { border-color: var(--p-main); box-shadow: 0 0 0 4px rgba(114, 14, 158, 0.2); transform: scale(1.1); }
+        .user-avatar-sm { width: 35px; height: 35px; border-radius: 50%; background-size: cover; background-position: center; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .user-avatar-lg { width: 80px; height: 80px; border-radius: 50%; background-size: cover; background-position: center; border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin: 0 auto; }
+
+        /* Dashboard Stats */
+        .stat-card { border-radius: 16px; padding: 15px; color: white; position: relative; overflow: hidden; box-shadow: 0 8px 20px -5px rgba(0,0,0,0.15); }
+        .stat-card h2 { font-weight: 600; font-size: 2.2rem; margin-bottom: 0; line-height: 1; }
+        .stat-card small { opacity: 0.9; font-weight: 400; font-size: 0.85rem; }
+        .stat-card i { position: absolute; right: -10px; bottom: -10px; font-size: 3.5rem; opacity: 0.2; transform: rotate(-15deg); }
+        .bg-grad-purple { background: linear-gradient(135deg, #720e9e 0%, #b06ab3 100%); }
+        .bg-grad-green { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .bg-grad-orange { background: linear-gradient(135deg, #fce38a 0%, #f38181 100%); color: #fff; }
+
+        /* Login Screen */
+        .auth-bg { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: white; background-image: radial-gradient(#720e9e10 1px, transparent 1px); background-size: 20px 20px; }
+        .auth-card { width: 100%; max-width: 420px; padding: 40px; text-align: center; }
+        .form-control-modern { background: #f8f9fa; border: 1px solid transparent; padding: 15px; border-radius: 12px; font-size: 1rem; transition: all 0.3s; }
+        .form-control-modern:focus { background: white; border-color: #720e9e50; box-shadow: 0 0 0 4px rgba(114, 14, 158, 0.1); }
+
+        /* Items Grid */
+        .item-card { background: white; border-radius: 18px; padding: 15px; position: relative; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: all 0.25s; }
+        .item-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(114, 14, 158, 0.1); }
+        .item-icon { width: 55px; height: 55px; border-radius: 14px; background: #f8f0fc; color: var(--p-main); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-right: 15px; }
+        .item-status-dot { width: 10px; height: 10px; border-radius: 50%; position: absolute; top: 15px; right: 15px; }
+        
+        /* Floating Navbar */
+        .nav-float { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(0,0,0,0.05); padding: 15px 0; position: sticky; top: 0; z-index: 100; }
+        .btn-main { background: var(--p-grad-1); border: none; color: white; border-radius: 12px; padding: 12px; font-weight: 500; box-shadow: 0 4px 15px rgba(114, 14, 158, 0.25); transition: all 0.3s; }
+        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(114, 14, 158, 0.35); color: white; }
+        
+        /* Chips */
+        .chip-container { overflow-x: auto; white-space: nowrap; padding: 5px 2px 15px 2px; -ms-overflow-style: none; scrollbar-width: none; }
+        .chip-container::-webkit-scrollbar { display: none; }
+        .chip-btn { border: 1px solid #e9ecef; background: white; color: #6c757d; border-radius: 50px; padding: 8px 18px; font-size: 0.9rem; margin-right: 8px; transition: all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .chip-btn.active { background: var(--p-main); color: white; border-color: var(--p-main); box-shadow: 0 4px 12px rgba(114, 14, 158, 0.3); transform: translateY(-1px); }
+
+    </style>
+</head>
+<body>
+
+    <div id="page-login" class="auth-bg">
+        <div class="auth-card">
+            <div class="mb-4 d-flex justify-content-center">
+                <div class="d-flex align-items-center flex-column">
+                    <div class="bg-grad-purple text-white rounded-4 d-flex align-items-center justify-content-center shadow-lg mb-3" style="width: 80px; height: 80px; font-size: 40px; transform: rotate(-5deg);">
+                        <i class="bi bi-lightning-charge-fill"></i>
+                    </div>
+                    <h3 class="fw-bold mb-0" style="color: var(--p-main); letter-spacing: -1px;">PEA ASSET</h3>
+                    <small class="text-muted" style="letter-spacing: 4px; font-size: 0.8rem; font-weight: 300;">CLOUD SYSTEM</small>
+                </div>
+            </div>
+
+            <div class="text-start d-flex flex-column gap-3">
+                <input type="email" id="login-email" class="form-control-modern" placeholder="อีเมล (user@pea.co.th)">
+                <input type="password" id="login-pass" class="form-control-modern" placeholder="รหัสผ่าน">
+                <div class="text-end"><button class="btn btn-link text-muted text-decoration-none small p-0" onclick="openForgotModal()">ลืมรหัสผ่าน?</button></div>
+            </div>
+            <button class="btn-main w-100 mt-4" onclick="doLogin()">เข้าใช้งานระบบ</button>
+            <div class="mt-4 pt-3"><button class="btn btn-link text-decoration-none text-muted p-0" onclick="goRegister()">สมัครสมาชิกใหม่</button></div>
+            <div id="login-msg" class="text-danger small mt-3 fw-bold"></div>
+        </div>
+    </div>
+
+    <div id="page-register" class="auth-bg hidden">
+        <div class="auth-card py-4" style="max-width: 600px;">
+            <div class="text-start mb-4">
+                <button class="btn btn-light btn-sm rounded-circle shadow-sm" onclick="goLogin()"><i class="bi bi-arrow-left"></i></button>
+                <span class="fw-bold ms-3 fs-5">ลงทะเบียน</span>
+            </div>
+
+            <div class="text-center mb-4">
+                <label class="small text-muted mb-2 d-block">เลือกรูปโปรไฟล์</label>
+                <div class="d-flex justify-content-center gap-2 flex-wrap" id="reg-avatar-list"></div>
+                <input type="hidden" id="reg-avatar-val" value="boy">
+            </div>
+
+            <div class="row g-3 text-start">
+                <div class="col-md-6"><input type="text" id="reg-id" class="form-control-modern" placeholder="รหัสพนักงาน (ถ้ามี)"></div>
+                <div class="col-md-6"><input type="text" id="reg-name" class="form-control-modern" placeholder="ชื่อ-นามสกุล"></div>
+                <div class="col-md-6"><input type="tel" id="reg-phone" class="form-control-modern" placeholder="เบอร์โทรศัพท์"></div>
+                <div class="col-12">
+                    <select id="reg-branch" class="form-control-modern">
+                        <option value="" selected disabled>-- เลือกสังกัด --</option>
+                        <optgroup label="🏢 สำนักงานเขต กฟต.1 (เพชรบุรี)"><option value="กฟต.1">สำนักงานเขต กฟต.1</option></optgroup>
+                        <optgroup label="📍 จ.เพชรบุรี">
+                            <option value="กฟจ.เพชรบุรี">กฟจ.เพชรบุรี</option><option value="กฟอ.ชะอำ">กฟอ.ชะอำ</option><option value="กฟอ.ท่ายาง">กฟอ.ท่ายาง</option>
+                            <option value="กฟอ.บ้านลาด">กฟอ.บ้านลาด</option><option value="กฟอ.เขาย้อย">กฟอ.เขาย้อย</option><option value="กฟอ.บ้านแหลม">กฟอ.บ้านแหลม</option>
+                            <option value="กฟสาขา.หนองหญ้าปล้อง">กฟสาขา.หนองหญ้าปล้อง</option><option value="กฟสาขา.แก่งกระจาน">กฟสาขา.แก่งกระจาน</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <select id="reg-dept" class="form-control-modern">
+                        <option value="" selected disabled>-- เลือกแผนก --</option>
+                        <option value="ผจก.">ผู้จัดการ (ผจก.)</option><option value="กอก.">กองอำนวยการ (กอก.)</option>
+                        <option value="กบง.">กองบัญชีและการเงิน (กบง.)</option><option value="กบค.">กองบริหารงานบุคคล (กบค.)</option>
+                        <option value="กวผ.">กองวิศวกรรมและวางแผน (กวผ.)</option><option value="กปบ.">กองปฏิบัติการและบำรุงรักษา (กปบ.)</option>
+                        <option value="กบล.">กองบริการลูกค้า (กบล.)</option><option value="กคส.">กองก่อสร้าง (กคส.)</option>
+                        <option value="กพห.">กองพัสดุ (กพห.)</option><option value="มิเตอร์">แผนกมิเตอร์</option>
+                        <option value="คลังพัสดุ">คลังพัสดุ</option><option value="ไอที/สื่อสาร">ไอที / สื่อสาร</option>
+                    </select>
+                </div>
+                <div class="col-12"><input type="email" id="reg-email" class="form-control-modern" placeholder="อีเมล (สำหรับเข้าระบบ)"></div>
+                <div class="col-12"><input type="password" id="reg-pass" class="form-control-modern" placeholder="กำหนดรหัสผ่าน"></div>
+            </div>
+            <button class="btn-main w-100 mt-4" onclick="doRegister()">ยืนยันการลงทะเบียน</button>
+        </div>
+    </div>
+
+    <div id="page-main" class="hidden">
+        <div class="nav-float shadow-sm mb-4">
+            <div class="container d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div class="bg-grad-purple text-white rounded-3 d-flex align-items-center justify-content-center me-2 shadow-sm" style="width: 40px; height: 40px; font-size: 20px;">
+                        <i class="bi bi-lightning-charge-fill"></i>
+                    </div>
+                    <div style="line-height: 1.1;">
+                        <div class="fw-bold text-dark" style="font-size: 1.1rem; letter-spacing: -0.5px;">PEA ASSET</div>
+                        <small class="text-muted" style="font-size: 0.65rem; letter-spacing: 1px;">CLOUD SYSTEM</small>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center" onclick="openMyProfile()" style="cursor: pointer;">
+                    <div id="nav-avatar" class="user-avatar-sm me-2" style="background-image: url('https://cdn-icons-png.flaticon.com/512/4140/4140048.png');"></div>
+                    <div>
+                        <h6 class="fw-bold mb-0 text-dark" id="nav-user">User</h6>
+                        <small class="text-muted" style="font-size: 0.7rem;" id="nav-info">Loading...</small>
+                    </div>
+                </div>
+                <button class="btn btn-light btn-sm rounded-pill text-danger px-3 ms-2" onclick="logout()"><i class="bi bi-box-arrow-right"></i></button>
+            </div>
+        </div>
+
+        <div class="container pb-5">
+            <div id="db-status" class="alert alert-light border small py-1 mb-3 text-center text-muted rounded-pill bg-white shadow-sm" style="font-size: 0.75rem;">
+                <span class="spinner-border spinner-border-sm me-2"></span>Connecting...
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-4"><div class="stat-card bg-grad-purple"><h2 id="stat-total">0</h2><small>ทั้งหมด</small><i class="bi bi-box-seam"></i></div></div>
+                <div class="col-4"><div class="stat-card bg-grad-green"><h2 id="stat-avail">0</h2><small>ว่าง</small><i class="bi bi-check-circle"></i></div></div>
+                <div class="col-4"><div class="stat-card bg-grad-orange"><h2 id="stat-borrow">0</h2><small>ถูกยืม</small><i class="bi bi-clock-history"></i></div></div>
+            </div>
+
+            <div class="chip-container mb-3 ps-1">
+                <button class="chip-btn active" onclick="selectCategory('all', this)">ทั้งหมด</button>
+                <button class="chip-btn" onclick="selectCategory('bi-laptop', this)">💻 ไอที</button>
+                <button class="chip-btn" onclick="selectCategory('bi-broadcast', this)">📻 วิทยุ</button>
+                <button class="chip-btn" onclick="selectCategory('bi-tools', this)">🛠️ ช่าง</button>
+                <button class="chip-btn" onclick="selectCategory('bi-car-front', this)">🚗 รถ</button>
+            </div>
+
+            <div class="d-flex gap-2 mb-4">
+                <div class="input-group shadow-sm bg-white rounded-pill overflow-hidden border-0">
+                    <span class="input-group-text bg-white border-0 ps-3"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" id="search-box" class="form-control border-0 shadow-none" placeholder="ค้นหา..." onkeyup="renderGrid()">
+                    <button class="btn btn-light border-0 text-muted border-start" id="btn-my-items" onclick="toggleMyFilter()"><i class="bi bi-person-circle"></i> ของฉัน</button>
+                    <button class="btn btn-light border-0 text-primary px-3" onclick="openScanner()"><i class="bi bi-qr-code-scan"></i></button>
+                </div>
+                <button id="btn-add-item" class="btn btn-main px-3 shadow-sm hidden rounded-circle" onclick="openAddModal()" style="width: 45px; height: 45px; flex-shrink: 0;"><i class="bi bi-plus-lg"></i></button>
+            </div>
+
+            <div id="items-grid" class="row g-3 mb-5"></div>
+            
+            <h6 class="fw-bold text-muted ps-2 border-start border-4 border-primary mt-5">ประวัติล่าสุด</h6>
+            <div id="history-list" class="list-group list-group-flush bg-white rounded-4 shadow-sm p-2 mt-3"></div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="profileModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 p-3">
+                <div class="modal-header border-0"><h5 class="modal-title fw-bold">โปรไฟล์ของฉัน</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body text-center pt-0">
+                    <div id="profile-avatar-preview" class="user-avatar-lg mb-3"></div>
+                    <h5 class="fw-bold mb-0" id="profile-name">Name</h5>
+                    <span class="badge bg-secondary mb-3" id="profile-role">Role</span>
+                    <div class="text-start bg-light p-3 rounded-3 mb-3">
+                        <small class="text-muted d-block">รหัสพนักงาน</small><div class="fw-bold mb-2" id="profile-emp-id">-</div>
+                        <small class="text-muted d-block">อีเมล</small><div class="fw-bold mb-2" id="profile-email">-</div>
+                        <small class="text-muted d-block">เบอร์โทร</small><div class="fw-bold" id="profile-phone">-</div>
+                    </div>
+                    <button class="btn btn-outline-primary w-100 mb-2" onclick="editProfile()">แก้ไขข้อมูล</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal fade" id="editProfileModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 p-3">
+                <div class="modal-header border-0"><h5 class="modal-title fw-bold">แก้ไขข้อมูลส่วนตัว</h5></div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <label class="small text-muted mb-2">เปลี่ยนรูปโปรไฟล์</label>
+                        <div class="d-flex justify-content-center gap-2 flex-wrap" id="edit-avatar-list"></div>
+                        <input type="hidden" id="edit-avatar-val">
+                    </div>
+                    <input id="edit-name" class="form-control-modern mb-2" placeholder="ชื่อ-นามสกุล">
+                    <input id="edit-phone" class="form-control-modern mb-2" placeholder="เบอร์โทร">
+                    <input id="edit-emp-id" class="form-control-modern" placeholder="รหัสพนักงาน">
+                </div>
+                <div class="modal-footer border-0"><button class="btn btn-main w-100" onclick="saveProfile()">บันทึก</button></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="forgotModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 p-3">
+                <div class="modal-header border-0"><h5 class="modal-title fw-bold">ลืมรหัสผ่าน</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body pt-0">
+                    <div id="forgot-step-1">
+                        <p class="text-muted small">กรอกอีเมลและเบอร์โทรศัพท์เพื่อยืนยันตัวตน</p>
+                        <input id="reset-email" class="form-control-modern mb-2" placeholder="อีเมล">
+                        <input id="reset-phone" class="form-control-modern mb-3" placeholder="เบอร์โทรศัพท์">
+                        <button class="btn-main w-100" onclick="verifyUser()">ตรวจสอบ</button>
+                    </div>
+                    <div id="forgot-step-2" class="hidden">
+                        <div class="alert alert-success small">ยืนยันตัวตนสำเร็จ!</div>
+                        <input type="password" id="new-password" class="form-control-modern mb-3" placeholder="ตั้งรหัสผ่านใหม่">
+                        <button class="btn-main w-100" onclick="resetPassword()">บันทึกรหัสผ่าน</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="asset-detail" class="bg-white p-4 hidden shadow-lg position-fixed bottom-0 start-0 w-100 m-0 rounded-top-4" style="z-index: 1050; max-height: 85vh; overflow-y: auto;">
+        <div class="text-center mb-4"><div class="bg-secondary rounded-pill mx-auto" style="width: 40px; height: 4px; opacity: 0.2;"></div></div>
+        <div class="d-flex align-items-start mb-4">
+            <div class="bg-light rounded-3 p-3 me-3 text-primary"><i class="bi bi-box-seam fs-1"></i></div>
+            <div><span class="badge bg-secondary mb-1 fw-normal" id="det-id">ID</span><h4 class="fw-bold mb-0 text-dark" id="det-name">Item Name</h4></div>
+        </div>
+        <div id="status-area"></div>
+        <button class="btn btn-light text-muted w-100 mt-3 rounded-pill" onclick="closeAssetDetail()">ปิดหน้าต่าง</button>
+        <div id="admin-tools" class="mt-3 pt-3 border-top hidden text-center"><button class="btn btn-sm text-danger" onclick="deleteItem()">ลบรายการนี้ (Admin)</button></div>
+    </div>
+
+    <div class="modal fade" id="scannerModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 rounded-4 overflow-hidden"><div class="modal-body p-0"><div id="reader"></div></div><button class="btn btn-light w-100 rounded-0 py-3 fw-bold" data-bs-dismiss="modal">ปิดกล้อง</button></div></div></div>
+    <div class="modal fade" id="addModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 rounded-4 p-3"><div class="modal-header border-0"><h5 class="modal-title fw-bold">เพิ่มครุภัณฑ์ใหม่</h5></div><div class="modal-body pt-0"><input id="new-id" class="form-control-modern mb-2" placeholder="รหัสทรัพย์สิน"><input id="new-name" class="form-control-modern mb-2" placeholder="ชื่อรายการ"><select id="new-icon" class="form-control-modern"><option value="bi-broadcast">วิทยุ</option><option value="bi-laptop">คอมพิวเตอร์</option><option value="bi-tools">เครื่องมือ</option><option value="bi-car-front">ยานพาหนะ</option><option value="bi-printer">อื่นๆ</option></select></div><div class="modal-footer border-0"><button class="btn-main w-100" onclick="confirmAddItem()">บันทึก</button></div></div></div></div>
+    <div class="modal fade" id="borrowModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 rounded-4 p-3"><div class="modal-header border-0"><h5 class="modal-title fw-bold">ระบุวันส่งคืน</h5></div><div class="modal-body text-center pt-0"><input type="text" id="due-date-input" class="form-control border-0 bg-light text-center fw-bold text-primary display-6 py-4 rounded-4" placeholder="วว/ดด/ปปปป" onfocus="(this.type='date')" onblur="if(!this.value) { this.type='text'; }"></div><div class="modal-footer border-0"><button class="btn-main w-100" onclick="confirmBorrow()">ยืนยัน</button></div></div></div></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, update, onValue, push, remove, get, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyDHBp7xoh9TgIxIkbfv3ZGe-z8isnSJo1Q", authDomain: "pea-asset-realtime.firebaseapp.com", databaseURL: "https://pea-asset-realtime-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "pea-asset-realtime", storageBucket: "pea-asset-realtime.firebasestorage.app", messagingSenderId: "1097630363105", appId: "1:1097630363105:web:08d18ed117a8c9de5bf6a0" };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        window.db = db; window.dbRef = ref; window.dbSet = set; window.dbUpdate = update; window.dbPush = push; window.dbRemove = remove; window.dbGet = get; window.dbChild = child;
+
+        onValue(ref(db, 'items'), (snapshot) => {
+            document.getElementById('db-status').innerHTML = '<span class="text-success">●</span> Online';
+            window.allItems = snapshot.val() ? Object.values(snapshot.val()) : [];
+            window.renderGrid();
+            if(window.currentOpenId) { const item = window.allItems.find(i => i.id === window.currentOpenId); item ? window.renderDetailContent(item) : window.closeAssetDetail(); }
+        });
+
+        onValue(ref(db, 'logs'), (snapshot) => {
+            const logs = snapshot.val() ? Object.values(snapshot.val()).reverse().slice(0, 15) : [];
+            document.getElementById('history-list').innerHTML = logs.map(l => `
+                <div class="list-group-item border-0 border-bottom py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <div class="user-avatar-sm me-3" style="background-image: url('${getAvatarUrl(l.avatar)}'); min-width:35px;"></div>
+                            <div><h6 class="mb-0 fw-bold text-dark">${l.item}</h6><small class="text-muted"><span class="badge ${l.action==='ยืม'?'bg-warning text-dark':'bg-success'} rounded-pill me-1">${l.action}</span> โดย ${l.user}</small></div>
+                        </div>
+                        <small class="text-muted text-end" style="font-size:0.7rem">${l.time}</small>
+                    </div>
+                </div>`).join('');
+        });
+    </script>
+
+    <script>
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxwRwxPPltqI0w0CO6KafoSo0uMF4jqoXtqRioVUL4w0_YJhBC01cBMJDZGsmizkFpnCA/exec";
+        
+        const AVATARS = [
+            {id: 'boy', url: 'https://cdn-icons-png.flaticon.com/512/4140/4140048.png', restricted: false},
+            {id: 'girl', url: 'https://cdn-icons-png.flaticon.com/512/4140/4140047.png', restricted: false},
+            {id: 'man', url: 'https://cdn-icons-png.flaticon.com/512/4140/4140037.png', restricted: false},
+            {id: 'woman', url: 'https://cdn-icons-png.flaticon.com/512/4140/4140051.png', restricted: false},
+            {id: 'tech', url: 'https://cdn-icons-png.flaticon.com/512/3048/3048127.png', restricted: false},
+            {id: 'admin', url: 'https://cdn-icons-png.flaticon.com/512/2318/2318683.png', restricted: false},
+            {id: 'boss_man', url: 'https://cdn-icons-png.flaticon.com/512/4140/4140040.png', restricted: true},
+            {id: 'boss_woman', url: 'https://cdn-icons-png.flaticon.com/512/4140/4140039.png', restricted: true}
+        ];
+        
+        window.allItems = []; window.currentOpenId = null; window.showMyFilter = false; window.currentCategory = 'all'; window.resetUserKey = null; window.userKey = null;
+        let currentUser = JSON.parse(localStorage.getItem('pea_user_session'));
+        const ADMIN_EMAILS = ["admin@pea.co.th", "tewit2547t@gmail.com"];
+
+        window.onload = function() {
+            renderAvatarOptions('reg');
+            if(currentUser) { showMain(); renderAvatarOptions('edit'); } else { goLogin(); }
+            document.getElementById('scannerModal').addEventListener('hidden.bs.modal', () => { if(html5QrcodeScanner) html5QrcodeScanner.clear(); });
+        };
+
+        function getAvatarUrl(id) { return (AVATARS.find(a => a.id === id) || AVATARS[0]).url; }
+        function renderAvatarOptions(prefix) {
+            const container = document.getElementById(prefix + '-avatar-list');
+            if(!container) return;
+            const isAdmin = currentUser && ADMIN_EMAILS.includes(currentUser.email);
+            let displayAvatars = (prefix === 'reg' || (prefix === 'edit' && !isAdmin)) ? AVATARS.filter(a => !a.restricted) : AVATARS;
+            container.innerHTML = displayAvatars.map(a => `<div class="avatar-option ${a.id==='boy'?'selected':''}" style="background-image: url('${a.url}')" onclick="selectAvatar('${a.id}', '${prefix}')" id="${prefix}-av-${a.id}"></div>`).join('');
+        }
+
+        window.selectAvatar = (id, prefix) => {
+            document.querySelectorAll(`#${prefix}-avatar-list .avatar-option`).forEach(el => el.classList.remove('selected'));
+            const el = document.getElementById(`${prefix}-av-${id}`); if(el) el.classList.add('selected');
+            document.getElementById(`${prefix}-avatar-val`).value = id;
+        }
+
+        window.openMyProfile = () => {
+            document.getElementById('profile-avatar-preview').style.backgroundImage = `url('${getAvatarUrl(currentUser.avatar)}')`;
+            document.getElementById('profile-name').innerText = currentUser.name;
+            document.getElementById('profile-role').innerText = `${currentUser.branch} | ${currentUser.dept}`;
+            document.getElementById('profile-emp-id').innerText = currentUser.empId || "-";
+            document.getElementById('profile-email').innerText = currentUser.email;
+            document.getElementById('profile-phone').innerText = currentUser.phone;
+            new bootstrap.Modal(document.getElementById('profileModal')).show();
+        }
+
+        window.editProfile = () => {
+            bootstrap.Modal.getInstance(document.getElementById('profileModal')).hide();
+            document.getElementById('edit-name').value = currentUser.name;
+            document.getElementById('edit-phone').value = currentUser.phone;
+            document.getElementById('edit-emp-id').value = currentUser.empId || "";
+            renderAvatarOptions('edit');
+            setTimeout(() => selectAvatar(currentUser.avatar || 'boy', 'edit'), 50);
+            new bootstrap.Modal(document.getElementById('editProfileModal')).show();
+        }
+
+        window.saveProfile = () => {
+            const name = document.getElementById('edit-name').value; const phone = document.getElementById('edit-phone').value; const empId = document.getElementById('edit-emp-id').value; const avatar = document.getElementById('edit-avatar-val').value;
+            if(!name || !phone) return alert("กรุณากรอกชื่อและเบอร์โทร");
+            window.dbGet(window.dbChild(window.dbRef(window.db), 'users')).then((snapshot) => {
+                const users = snapshot.val();
+                const myKey = Object.keys(users).find(k => users[k].email === currentUser.email);
+                if(myKey) {
+                    const updates = { name, phone, empId, avatar };
+                    window.dbUpdate(window.dbRef(window.db, 'users/' + myKey), updates).then(() => {
+                        alert("บันทึกข้อมูลเรียบร้อย"); currentUser = { ...currentUser, ...updates };
+                        localStorage.setItem('pea_user_session', JSON.stringify(currentUser));
+                        bootstrap.Modal.getInstance(document.getElementById('editProfileModal')).hide(); showMain();
+                    });
+                }
+            });
+        }
+
+        function formatDateToThai(dateString) { if (!dateString) return "-"; const p = dateString.split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : dateString; }
+
+        window.goLogin = () => { hideAll(); document.getElementById('page-login').classList.remove('hidden'); }
+        window.goRegister = () => { hideAll(); document.getElementById('page-register').classList.remove('hidden'); }
+        function hideAll() { document.querySelectorAll('#page-login, #page-register, #page-main').forEach(el => el.classList.add('hidden')); }
+
+        window.doRegister = function() {
+            const name = document.getElementById('reg-name').value.trim(); const empId = document.getElementById('reg-id').value.trim(); const phone = document.getElementById('reg-phone').value.trim(); const branch = document.getElementById('reg-branch').value; const dept = document.getElementById('reg-dept').value; const email = document.getElementById('reg-email').value.trim().toLowerCase(); const pass = document.getElementById('reg-pass').value; const avatar = document.getElementById('reg-avatar-val').value;
+            if(!name || !phone || !branch || !dept || !email || !pass) return alert("กรุณากรอกข้อมูลให้ครบ");
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return alert("รูปแบบอีเมลไม่ถูกต้อง");
+            window.dbGet(window.dbChild(window.dbRef(window.db), 'users')).then((snapshot) => {
+                const users = snapshot.val() || {};
+                if(Object.values(users).some(u => u.email === email)) return alert("อีเมลนี้ใช้แล้ว");
+                const newUser = { name, empId, phone, branch, dept, email, pass, avatar };
+                window.dbPush(window.dbRef(window.db, 'users'), newUser).then(() => { alert("ลงทะเบียนสำเร็จ!"); currentUser = newUser; localStorage.setItem('pea_user_session', JSON.stringify(currentUser)); showMain(); });
+            });
+        }
+
+        window.doLogin = function() {
+            const email = document.getElementById('login-email').value.trim().toLowerCase(); const pass = document.getElementById('login-pass').value;
+            if(!email || !pass) return;
+            window.dbGet(window.dbChild(window.dbRef(window.db), 'users')).then((snapshot) => {
+                const users = snapshot.val();
+                let foundUser = Object.values(users || {}).find(u => u.email === email && u.pass === pass);
+                if(!foundUser && ADMIN_EMAILS.includes(email) && pass === "admin1234") foundUser = { name: "Admin System", email: email, branch: "กฟต.1", dept: "Admin", phone: "-", avatar: 'admin' };
+                if(foundUser) { currentUser = foundUser; localStorage.setItem('pea_user_session', JSON.stringify(currentUser)); showMain(); } else document.getElementById('login-msg').innerText = "อีเมลหรือรหัสผ่านไม่ถูกต้อง";
+            });
+        }
+
+        window.logout = () => { localStorage.removeItem('pea_user_session'); location.reload(); }
+        window.showMain = () => {
+            hideAll(); document.getElementById('page-main').classList.remove('hidden');
+            document.getElementById('nav-user').innerText = currentUser.name; document.getElementById('nav-info').innerText = currentUser.branch; document.getElementById('nav-avatar').style.backgroundImage = `url('${getAvatarUrl(currentUser.avatar)}')`;
+            if(ADMIN_EMAILS.includes(currentUser.email)) document.getElementById('btn-add-item').classList.remove('hidden');
+        }
+
+        window.openForgotModal = () => { document.getElementById('forgot-step-1').classList.remove('hidden'); document.getElementById('forgot-step-2').classList.add('hidden'); document.getElementById('reset-email').value=''; document.getElementById('reset-phone').value=''; new bootstrap.Modal(document.getElementById('forgotModal')).show(); }
+        window.verifyUser = () => {
+            const email = document.getElementById('reset-email').value.trim().toLowerCase(); const phone = document.getElementById('reset-phone').value.trim();
+            window.dbGet(window.dbChild(window.dbRef(window.db), 'users')).then((snapshot) => {
+                const users = snapshot.val() || {};
+                let foundKey = Object.keys(users).find(k => users[k].email === email && users[k].phone === phone);
+                if(foundKey) { window.resetUserKey = foundKey; document.getElementById('forgot-step-1').classList.add('hidden'); document.getElementById('forgot-step-2').classList.remove('hidden'); } else alert('ไม่พบข้อมูลผู้ใช้');
+            });
+        }
+        window.resetPassword = () => { const newPass = document.getElementById('new-password').value; if(newPass) window.dbUpdate(window.dbRef(window.db, 'users/'+window.resetUserKey), { pass: newPass }).then(() => { alert('สำเร็จ!'); bootstrap.Modal.getInstance(document.getElementById('forgotModal')).hide(); }); }
+
+        window.selectCategory = function(cat, btn) { window.currentCategory = cat; document.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); window.renderGrid(); }
+        window.toggleMyFilter = function() { window.showMyFilter = !window.showMyFilter; const btn = document.getElementById('btn-my-items'); window.showMyFilter ? (btn.classList.remove('text-muted'), btn.classList.add('text-primary','fw-bold','bg-light')) : (btn.classList.add('text-muted'), btn.classList.remove('text-primary','fw-bold','bg-light')); window.renderGrid(); }
+
+        window.renderGrid = function() {
+            const txt = document.getElementById('search-box').value.toLowerCase(); const grid = document.getElementById('items-grid'); grid.innerHTML = "";
+            document.getElementById('stat-total').innerText = window.allItems.length; document.getElementById('stat-borrow').innerText = window.allItems.filter(i => i.status === 'borrowed').length; document.getElementById('stat-avail').innerText = window.allItems.length - window.allItems.filter(i => i.status === 'borrowed').length;
+            let filtered = window.allItems.filter(i => i.name.toLowerCase().includes(txt) || i.id.toLowerCase().includes(txt));
+            if(window.currentCategory !== 'all') filtered = filtered.filter(i => i.icon === window.currentCategory);
+            if(window.showMyFilter) filtered = filtered.filter(i => i.status === 'borrowed' && i.borrower && i.borrower.email === currentUser.email);
+            filtered.sort((a, b) => { if(a.status === 'available' && b.status !== 'available') return -1; if(a.status !== 'available' && b.status === 'available') return 1; return a.name.localeCompare(b.name); });
+            if(filtered.length === 0) { grid.innerHTML = `<div class="col-12 text-center text-muted py-5 opacity-50"><i class="bi bi-inbox fs-1"></i><br>ไม่พบรายการ</div>`; return; }
+            filtered.forEach(item => {
+                let isLate = false; let lateDays = 0; if(item.status === 'borrowed' && item.due_date) { const due = new Date(item.due_date); due.setHours(0,0,0,0); const today = new Date(); today.setHours(0,0,0,0); if(today > due) { isLate = true; lateDays = Math.ceil((today - due) / (1000*60*60*24)); } }
+                const statusDot = item.status === 'available' ? 'bg-success' : 'bg-warning';
+                grid.innerHTML += `<div class="col-12 col-md-6 col-lg-4"><div class="item-card d-flex align-items-center" onclick="openDetail('${item.id}')"><div class="item-status-dot ${statusDot}"></div><div class="item-icon"><i class="bi ${item.icon || 'bi-box-seam'}"></i></div><div style="flex:1; overflow:hidden;"><h6 class="fw-bold mb-1 text-truncate text-dark">${item.name}</h6><small class="text-muted d-block">${item.id}</small>${isLate ? `<span class="badge bg-danger rounded-pill mt-1">เกิน ${lateDays} วัน</span>` : ''}</div></div></div>`;
+            });
+        };
+
+        function sendToGoogleSheets(data) { if(!GOOGLE_SCRIPT_URL) return; if(data.phone) data.phone = "'" + data.phone; fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) }).catch(console.error); }
+        window.openDetail = (id) => { window.currentOpenId = id; const item = window.allItems.find(i => i.id === id); if(item) { document.getElementById('asset-detail').classList.remove('hidden'); window.renderDetailContent(item); } };
+        window.closeAssetDetail = () => { document.getElementById('asset-detail').classList.add('hidden'); window.currentOpenId = null; };
+        window.renderDetailContent = (item) => {
+            document.getElementById('det-name').innerText = item.name; document.getElementById('det-id').innerText = item.id; document.getElementById('admin-tools').classList.toggle('hidden', !ADMIN_EMAILS.includes(currentUser.email));
+            const area = document.getElementById('status-area');
+            if(item.status === 'available') { area.innerHTML = `<div class="p-3 bg-light rounded-4 mb-3 text-center text-success"><i class="bi bi-check-circle-fill fs-3 d-block mb-2"></i> สถานะ: พร้อมให้เบิก</div><button class="btn-main w-100" onclick="openBorrowModal()">ทำรายการเบิก</button>`; } else { const b = item.borrower || {}; area.innerHTML = `<div class="p-4 bg-light rounded-4 mb-3 border border-warning border-opacity-25"><div class="d-flex align-items-center mb-3"><div class="user-avatar-sm me-3" style="background-image: url('${getAvatarUrl(b.avatar)}'); min-width:40px; height:40px;"></div><div><h6 class="fw-bold mb-0">${b.name}</h6><small class="text-muted">ID: ${b.empId||'-'} | ${b.dept}</small></div></div><div class="d-flex justify-content-between bg-white p-3 rounded-3 mb-2"><small class="text-muted">กำหนดคืน</small><strong class="text-danger">${formatDateToThai(item.due_date)}</strong></div><div class="d-flex justify-content-between bg-white p-3 rounded-3"><small class="text-muted">เบอร์ติดต่อ</small><strong>${b.phone}</strong></div></div>${(ADMIN_EMAILS.includes(currentUser.email) || b.email === currentUser.email) ? `<button class="btn btn-outline-danger w-100 rounded-pill py-2" onclick="doReturn()">แจ้งรับคืนของ</button>` : `<button class="btn btn-secondary w-100 rounded-pill" disabled>ไม่สามารถเบิกซ้อนได้</button>`}`; }
+        };
+
+        function openAddModal() { new bootstrap.Modal(document.getElementById('addModal')).show(); }
+        window.confirmAddItem = () => { const id = document.getElementById('new-id').value; const name = document.getElementById('new-name').value; const icon = document.getElementById('new-icon').value; if(!id || !name) return alert('กรอกข้อมูลให้ครบ'); window.dbSet(window.dbRef(window.db, 'items/' + id), { id, name, icon, status: 'available' }); bootstrap.Modal.getInstance(document.getElementById('addModal')).hide(); }
+        window.deleteItem = () => { if(confirm('ยืนยันลบ?')) { window.dbRemove(window.dbRef(window.db, 'items/' + window.currentOpenId)); window.closeAssetDetail(); } }
+        window.openBorrowModal = () => { document.getElementById('due-date-input').min = new Date().toISOString().split('T')[0]; new bootstrap.Modal(document.getElementById('borrowModal')).show(); }
+        window.confirmBorrow = () => {
+            const date = document.getElementById('due-date-input').value; if(!date) return alert('ระบุวันที่');
+            const item = window.allItems.find(i => i.id === window.currentOpenId);
+            const borrowerData = { name: currentUser.name, empId: currentUser.empId||'-', email: currentUser.email, branch: currentUser.branch, dept: currentUser.dept, phone: currentUser.phone, avatar: currentUser.avatar };
+            window.dbUpdate(window.dbRef(window.db, 'items/' + item.id), { status: 'borrowed', due_date: date, borrower: borrowerData });
+            window.dbPush(window.dbRef(window.db, 'logs'), { item: item.name, action: 'ยืม', user: currentUser.name, avatar: currentUser.avatar, dept: currentUser.dept, time: new Date().toLocaleString('th-TH') });
+            sendToGoogleSheets({ action: 'ยืม', itemName: item.name, itemId: item.id, userName: currentUser.name, branch: currentUser.branch + " (" + currentUser.dept + ")", email: currentUser.email, phone: currentUser.phone, dueDate: formatDateToThai(date), note: '-' });
+            bootstrap.Modal.getInstance(document.getElementById('borrowModal')).hide();
+        }
+        window.doReturn = () => {
+            if(!confirm('ยืนยันรับคืนอุปกรณ์?')) return;
+            const item = window.allItems.find(i => i.id === window.currentOpenId);
+            window.dbUpdate(window.dbRef(window.db, 'items/' + item.id), { status: 'available', due_date: null, borrower: null });
+            window.dbPush(window.dbRef(window.db, 'logs'), { item: item.name, action: 'คืน', user: currentUser.name, avatar: currentUser.avatar, dept: currentUser.dept, time: new Date().toLocaleString('th-TH') });
+            sendToGoogleSheets({ action: 'คืน', itemName: item.name, itemId: item.id, userName: currentUser.name, branch: currentUser.branch + " (" + currentUser.dept + ")", email: currentUser.email, phone: currentUser.phone, dueDate: '-', note: 'คืนสำเร็จ' });
+        }
+
+        let html5QrcodeScanner = null;
+        window.openScanner = () => { const modal = new bootstrap.Modal(document.getElementById('scannerModal')); modal.show(); setTimeout(() => { if(html5QrcodeScanner) html5QrcodeScanner.clear(); html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false); html5QrcodeScanner.render(window.onScanSuccess, ()=>{}); }, 500); }
+        window.onScanSuccess = (txt) => { if(html5QrcodeScanner) html5QrcodeScanner.clear(); bootstrap.Modal.getInstance(document.getElementById('scannerModal')).hide(); document.getElementById('search-box').value = txt; window.renderGrid(); const item = window.allItems.find(i => i.id === txt); item ? openDetail(item.id) : alert('ไม่พบรหัส: ' + txt); }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
